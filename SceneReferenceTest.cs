@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 
 public class SceneReferenceTest : MonoBehaviour
@@ -23,5 +24,6 @@ public class SceneReferenceTest : MonoBehaviour
     public SceneReference exampleMissing;
     public SceneReference exampleDisabled;
     public SceneReference exampleEnabled;
-    
+
 }
+#endif
