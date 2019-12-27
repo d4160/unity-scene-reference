@@ -12,19 +12,19 @@ using UnityEditor.VersionControl;
 // Author: JohannesMP (2018-08-12)
 //
 // A wrapper that provides the means to safely serialize Scene Asset References.
-// 
+//
 // Internally we serialize an Object to the SceneAsset which only exists at editor time.
 // Any time the object is serialized, we store the path provided by this Asset (assuming it was valid).
-// 
-// This means that, come build time, the string path of the scene asset is always already stored, which if 
+//
+// This means that, come build time, the string path of the scene asset is always already stored, which if
 // the scene was added to the build settings means it can be loaded.
-// 
+//
 // It is up to the user to ensure the scene exists in the build settings so it is loadable at runtime.
 // To help with this, a custom PropertyDrawer displays the scene build settings state.
-// 
+//
 // Known issues:
-//     -   When reverting back to a prefab which has the asset stored as null, Unity will show the property 
-//         as modified despite having just reverted. This only happens the fist time, and reverting again 
+//     -   When reverting back to a prefab which has the asset stored as null, Unity will show the property
+//         as modified despite having just reverted. This only happens the fist time, and reverting again
 //         fixes it. Under the hood the state is still always valid, and serialized correctly regardless.
 
 
@@ -181,11 +181,17 @@ public class SceneReference : ISerializationCallbackReceiver
     {
         return sceneAsset == null ? string.Empty : SceneReferencePropertyDrawer.BuildUtils.GetBuildScene(sceneAsset).AssetName;
     }
-
+    private Object _previousSceneAsset = null;
     private void HandleBeforeSerialize()
     {
+        if (IsValidSceneAsset == false)
+            return;
+
+        if (sceneAsset == _previousSceneAsset)
+            return;
+
         // Asset is invalid but have Path (build index too) to try and recover from
-        if (IsValidSceneAsset == false && string.IsNullOrEmpty(scenePath) == false)
+        /*if (IsValidSceneAsset == false && string.IsNullOrEmpty(scenePath) == false)
         {
             sceneAsset = GetSceneAssetFromPath();
 
@@ -199,11 +205,13 @@ public class SceneReference : ISerializationCallbackReceiver
             EditorSceneManager.MarkAllScenesDirty();
         }
         // Asset takes precendence and overwrites Path
-        else
+        else*/
         {
             scenePath = GetScenePathFromAsset();
             sceneBuildIndex = GetSceneBuildIndexFromAsset();
             sceneName = GetSceneNameFromAsset();
+
+            _previousSceneAsset = sceneAsset;
         }
     }
 
@@ -440,7 +448,7 @@ public class SceneReferencePropertyDrawer : PropertyDrawer
         buttonRect.x += buttonRect.width;
         bool isOpen = BuildUtils.IsOpen(buildScene);
 
-        tooltipMsg = !isOpen ? 
+        tooltipMsg = !isOpen ?
             "Open the scene with OpenSceneMode.Additive" :
             "Remove the scene";
 
@@ -547,9 +555,9 @@ public class SceneReferencePropertyDrawer : PropertyDrawer
 
             public Scene Scene => SceneManager.GetSceneByPath(assetPath);
 
-            public string AssetName 
+            public string AssetName
             {
-                get 
+                get
                 {
                     if (string.IsNullOrEmpty(_assetName))
                     {
